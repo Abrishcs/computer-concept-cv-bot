@@ -1,5 +1,7 @@
 import logging
 import os
+import threading
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from dotenv import load_dotenv
 from telegram.ext import (
     ApplicationBuilder,
@@ -11,9 +13,23 @@ from telegram.ext import (
 )
 import handlers
 
-# Load environment variables
-load_dotenv()
-BOT_TOKEN = os.getenv('BOT_TOKEN')
+# --- DUMMY SERVER FOR RENDER ---
+class DummyHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/plain')
+        self.end_headers()
+        self.wfile.write(b"Bot is alive!")
+
+def run_dummy_server():
+    port = int(os.environ.get("PORT", 8080))
+    server = HTTPServer(('0.0.0.0', port), DummyHandler)
+    print(f"Starting dummy web server on port {port} (for Render health check)")
+    server.serve_forever()
+
+# Start background server
+threading.Thread(target=run_dummy_server, daemon=True).start()
+# -------------------------------
 
 # Enable logging
 logging.basicConfig(
@@ -22,6 +38,9 @@ logging.basicConfig(
 )
 
 def main():
+    load_dotenv()
+    BOT_TOKEN = os.getenv('BOT_TOKEN')
+    
     if not BOT_TOKEN or BOT_TOKEN == "YOUR_BOT_TOKEN_HERE":
         print("❌ Error: BOT_TOKEN not found in .env file.")
         return

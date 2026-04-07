@@ -88,13 +88,28 @@ class Database:
     def save_cv_data(self, user_id, data):
         # Flatten dictionary for SQLite
         update_fields = {}
+        # List of valid columns in the users table to avoid trying to save non-existent columns
+        valid_columns = {
+            'username', 'full_name', 'phone', 'email', 'city', 'social',
+            'university', 'degree', 'edu_year', 'gpa', 'education',
+            'profile', 'skills', 'soft_skills', 'projects', 'experience',
+            'certifications', 'languages', 'photo_file_id', 'status', 'payment_status'
+        }
+
         for key, value in data.items():
-            if isinstance(value, (dict, list)):
+            if key not in valid_columns:
+                continue
+
+            if value is None:
+                update_fields[key] = None
+            elif isinstance(value, (dict, list)):
                 update_fields[key] = json.dumps(value)
             else:
-                update_fields[key] = value
+                # Ensure it's a string for TEXT columns
+                update_fields[key] = str(value)
 
-        self.update_user(user_id, **update_fields)
+        if update_fields:
+            self.update_user(user_id, **update_fields)
 
     def get_stats(self):
         with self.get_connection() as conn:

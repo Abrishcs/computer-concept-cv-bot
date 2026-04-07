@@ -9,6 +9,7 @@ venv.bak/
 # Database files
 *.sqlite3
 *.db
+cv_builder.db
 
 # Temporary images and pdfs
 temp_*
